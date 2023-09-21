@@ -133,28 +133,86 @@ courseControllerObj.listBasedOnCategory = async (request, response) => {
 /*
     should course be updated after learner buys, bcoz name, description, category can be updated. but what about duration, price? maybe he wants to extend duration?
 */
-/*
+
 // updating fields: name, description, duration, category, price
-courseControllerObj.update = async (request, response) => {
+courseControllerObj.updateCourse = async (request, response) => {
     try{
         const {courseId} = request.params
 
-        const {body, userObj} = request // we get userObj in request bcoz of authenticateUser (tokenData)
+        const {body, userObj, file} = request // we get userObj in request bcoz of authenticateUser (tokenData)
 
-        const bodyObj = pick(body, ['name', 'description', 'duration', 'category', 'price'])
 
         const courseObjFromDB = await CourseModel.findOne({_id: courseId, userInstructorId: userObj.userId})
         console.log('courseObjFromDB', courseObjFromDB)
 
-        if(courseObjFromDB.isDeleted === false) // if course is not deleted -> then he can update course        {
+        if(courseObjFromDB.userInstructorId.toString() === userObj.userId) // if course belongs to this user, allow access
         {
-            const updatedCourseObjFromDB = await CourseModel.findOneAndUpdate( // finds course based on courseId and userInstructorId & updates it
-                {_id: courseId, userInstructorId: userObj.userId}, 
-                bodyObj, 
-                {new: true, runValidators: true}
-            )
+            if(courseObjFromDB.isDeleted) // if course is deleted -> then send this message
+            {
+                response.status(403).json({
+                    errors: 'This course is no longer available!'
+                })
+            }
+            else // if course is not deleted, check whether course is published or not
+            {
+                if(courseObjFromDB.isPublished) // if course is published -> then ins can update only name, description, image, category
+                {
+                    const bodyObj = pick(body, ['name', 'description', 'category'])
 
-            response.json(updatedCourseObjFromDB)
+                    if(file) // if file is uploaded => not undefined
+                    {
+                        bodyObj.image = file.filename // creating image property inside bodyObj
+                    }
+
+                    const updatedCourseObjFromDB = await CourseModel.findOneAndUpdate( // finds course based on courseId and userInstructorId & updates it
+                        {_id: courseId, userInstructorId: userObj.userId}, 
+                        bodyObj, 
+                        {new: true, runValidators: true}
+                    )
+
+                    response.json({
+                        message: 'course updated after published. isPublished = true',
+                        updatedCourseObjFromDB: updatedCourseObjFromDB
+                    })
+                }
+                else // => course is not published -> then ins can update all fields like: name, description, duration, category, image, price
+                {
+                    const bodyObj = pick(body, ['name', 'description', 'category', 'price', 'duration'])
+
+                    if(file)
+                    {
+                        bodyObj.image = file.filename
+                    }
+
+                    const updatedCourseObjFromDB = await CourseModel.findOneAndUpdate( // finds course based on courseId and userInstructorId & updates it
+                        {_id: courseId, userInstructorId: userObj.userId}, 
+                        bodyObj, 
+                        {new: true, runValidators: true}
+                    )
+
+                    response.json({
+                        message: 'course updated before published. isPublished = false',
+                        updatedCourseObjFromDB: updatedCourseObjFromDB
+                    })
+                }
+            }
+        }
+        else // => course doesn't belong to this user
+        {
+            response.status(403).json({
+                errors: 'Course Update access denied'
+            })
+        }
+
+        
+
+        
+
+        
+
+        if((courseObjFromDB.isDeleted === false) && (courseObjFromDB.isPublished === false)) // if course is not deleted and if course is not published -> then he can update course fields: name, description, duration, category, price, image        {
+        {
+            
         }
         else // => course is deleted i.e, courseObjFromDB = true
         {
@@ -167,7 +225,8 @@ courseControllerObj.update = async (request, response) => {
         response.status(404).json(e)
     }
 }
-*/
+
+
 
 
 
