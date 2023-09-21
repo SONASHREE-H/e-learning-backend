@@ -160,13 +160,11 @@ appObj.delete('/api/courses/delete-course/:courseId', authenticateUser, (request
 // list all the courses based on category -> isPublished = true, isDeleted = false
 appObj.get('/api/courses/list-courses', courseControllerObj.listBasedOnCategory) // to see list of courses, user need not login
 
-/*
-// DOUBT ??
+
 appObj.put('/api/courses/update-course:courseId', authenticateUser, (request, response, next) => {
     request.permittedRoles = ['instructor']
     next()
-}, authorizeUser, courseControllerObj.update) 
-*/
+}, authorizeUser, courseControllerObj.updateCourse) 
 
 
 
