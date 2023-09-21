@@ -1,6 +1,6 @@
+.env
 /playground
 /node_modules
 /image-folder
 /profile-image-folder
 /notes-upload-folder
-.env
